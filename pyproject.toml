@@ -1,0 +1,25 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "aiida-cryspy"
+version = "0.1.0"
+description = "New AiiDA-CrySPY workflow package"
+dependencies = [
+    "aiida-core>=2.0,<3",
+]
+
+[project.entry-points."aiida.workflows"]
+"aiida_cryspy.initial_structures" = "aiida_cryspy.workflows.initialize_WorkChain:initialize_workchain"
+"aiida_cryspy.optimize_structures"="aiida_cryspy.workflows.optimization_WorkChain:multi_structure_optimize_WorkChain"
+"aiida_cryspy.next_sg" = "aiida_cryspy.workflows.next_sg_WorkChain:next_sg_WorkChain"
+
+[project.entry-points."aiida.data"]
+"aiida_cryspy.dataframe" = "aiida_cryspy.data.dataframedata:DataframeData"
+"aiida_cryspy.ea_data" = "aiida_cryspy.data.eadata:EAData"
+"aiida_cryspy.rin_data" = "aiida_cryspy.data.rindata: RinData"
+"aiida_cryspy.structurecollection" = "aiida_cryspy.data.structurecollectiondata:StructureCollectionData"
+
+[tool.flit.module]
+name = "aiida_cryspy"
