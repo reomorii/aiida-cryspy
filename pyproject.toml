@@ -8,8 +8,8 @@ version = "0.1.0"
 description = "New AiiDA-CrySPY workflow package"
 dependencies = [
     "aiida-core>=2.0,<3",
-    "aiida-ase @ git+https://github.com/reomorii/aiida-ase.git"
-    "cryspy @ git+https://github.com/reomorii/CrysPY.git"
+    "aiida-ase @ git+https://github.com/reomorii/aiida-ase.git",
+    "csp-cryspy @ git+https://github.com/reomorii/CrysPY.git"
 ]
 
 [project.entry-points."aiida.workflows"]
