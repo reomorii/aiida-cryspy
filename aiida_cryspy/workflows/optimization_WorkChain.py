@@ -1,5 +1,5 @@
 from aiida.orm import Dict,List,Code,ArrayData,RemoteData,FolderData
-from aiida.engine import WorkChain,calcfunction,ToContext
+from aiida.engine import WorkChain,calcfunction,ToContext,while_
 from aiida.plugins import DataFactory
 import os
 
@@ -32,6 +32,7 @@ class optimization_WorkChain(WorkChain):
             cls.submit_workchains,
             cls.inspect_workchains
         )
+
 
         # spec.output("retrieved", valid_type=FolderData)
         # spec.output("opt_structure", valid_type=StructureData)
@@ -133,17 +134,45 @@ class multi_structure_optimize_WorkChain(WorkChain):
 
         spec.exit_code(300, 'ERROR_SUB_PROCESS_FAILED', message='One or more subprocesses failed.')
 
+        # spec.outline(
+        #     cls.optimize,
+        #     cls.collect_results
+        # )
+
         spec.outline(
-            cls.optimize,
-            cls.collect_results
+            cls.setup,
+            while_(cls.should_run_batch)(
+                cls.submit_batch,
+                cls.process_batch_results,
+            ),
+            cls.collect_results # 最後に結果をまとめる
         )
 
 
-    def optimize(self):
+    def setup(self):
+        """
+        最初に一度だけ呼ばれ、全体のタスクリストとバッチサイズを準備する。
+        """
+        self.ctx.ids_to_process = list(self.inputs.id_queueing)
+        self.ctx.batch_size = 2  # <-- バッチサイズをここで設定
+        self.ctx.all_submitted_calcs = {} # 全ての計算結果を保存する辞書
+
+
+    # ★ whileループの継続条件メソッドを追加
+    def should_run_batch(self):
+        """
+        処理すべきIDが残っていればTrueを返す。
+        """
+        return len(self.ctx.ids_to_process) > 0
+
+
+    def submit_batch(self):
         initial_structures_dict = self.inputs.initial_structures.structurecollection
         calculations = {}
 
-        for id in self.inputs.id_queueing:
+        ids_this_batch = self.ctx.ids_to_process[:self.ctx.batch_size]
+
+        for id in ids_this_batch:
             structure_ = initial_structures_dict[id]
             structure = StructureData(pymatgen=structure_)
             structure.store()
@@ -159,7 +188,24 @@ class multi_structure_optimize_WorkChain(WorkChain):
             label = f"opt_{id}"  # IDを文字列としてラベル付け
             calculations[label] = future
 
+        # 処理が終わったIDを全体のリストから削除
+        self.ctx.ids_to_process = self.ctx.ids_to_process[self.ctx.batch_size:]
+        self.report(f"Submitted a batch of {len(calculations)} calculations. "
+                            f"{len(self.ctx.ids_to_process)} calculations remaining.")
+
         return ToContext(**calculations)
+
+
+
+    # ★ バッチごとの結果を処理するメソッドを追加
+    def process_batch_results(self):
+        """
+        完了したバッチの結果を一時的に保存する。
+        """
+        finished_batch = {key: self.ctx[key] for key in self.ctx if key.startswith('opt_')}
+        self.ctx.all_submitted_calcs.update(finished_batch)
+
+
 
     def collect_results(self):
         init_struc_data = self.inputs.initial_structures.structurecollection
@@ -181,7 +227,7 @@ class multi_structure_optimize_WorkChain(WorkChain):
         #         return self.exit_codes.ERROR_SUB_PROCESS_FAILED
 
             # 成功判定のチェック
-        for cid, results_node in self.ctx.items():
+        for cid, results_node in self.ctx.all_submitted_calcs.items():
             if not results_node.is_finished_ok:
                 self.report(f'Sub-process for ID {cid} failed with exit status {results_node.exit_status}')
                 continue
