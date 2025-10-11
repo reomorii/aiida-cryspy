@@ -154,7 +154,7 @@ class multi_structure_optimize_WorkChain(WorkChain):
         最初に一度だけ呼ばれ、全体のタスクリストとバッチサイズを準備する。
         """
         self.ctx.ids_to_process = list(self.inputs.id_queueing)
-        self.ctx.batch_size = 2  # <-- バッチサイズをここで設定
+        self.ctx.batch_size = 100  # <-- バッチサイズをここで設定
         self.ctx.all_submitted_calcs = {} # 全ての計算結果を保存する辞書
 
 
