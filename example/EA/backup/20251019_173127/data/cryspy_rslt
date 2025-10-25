@@ -1,0 +1,11 @@
+   Gen  Opt   Magmom  Spg_num  Spg_sym   E_eV_atom Spg_num_opt Spg_sym_opt
+0    1  145     P3_2      145     P3_2 -183.566910        None        None
+1    1   10     P2/m       10     P2/m -180.047989        None        None
+2    1  107     I4mm      107     I4mm -174.273468        None        None
+3    1    5       C2        5       C2 -181.389069        None        None
+4    1  113  P-42_1m      113  P-42_1m -163.832108        None        None
+5    1  229    Im-3m      229    Im-3m -177.876572        None        None
+6    1  119    I-4m2      119    I-4m2 -157.020935        None        None
+7    1   59     Pmmn       59     Pmmn -173.582138        None        None
+8    1   45     Iba2       45     Iba2 -179.838394        None        None
+9    1  178   P6_122      178   P6_122 -157.353394        None        None

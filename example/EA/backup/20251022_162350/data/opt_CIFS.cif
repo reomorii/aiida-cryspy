@@ -1,0 +1,477 @@
+# generated using pymatgen
+data_BaFeO3
+_symmetry_space_group_name_H-M   P6/m
+_cell_length_a   9.34107480
+_cell_length_b   9.34107480
+_cell_length_c   10.57281553
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   120.00000000
+_symmetry_Int_Tables_number   175
+_chemical_formula_structural   BaFeO3
+_chemical_formula_sum   'ID_0'
+_cell_volume   798.94151037
+_cell_formula_units_Z   6
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+  2  '-x, -y, -z'
+  3  'x-y, x, z'
+  4  '-x+y, -x, -z'
+  5  '-y, x-y, z'
+  6  'y, -x+y, -z'
+  7  '-x, -y, z'
+  8  'x, y, -z'
+  9  '-x+y, -x, z'
+  10  'x-y, x, -z'
+  11  'y, -x+y, z'
+  12  '-y, x-y, -z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  6  0.00000000  0.50000000  0.16855328  1.0
+  Fe  Fe1  3  0.00000000  0.50000000  0.50000000  1.0
+  Fe  Fe2  2  0.33333333  0.66666667  0.50000000  1.0
+  Fe  Fe3  1  0.00000000  0.00000000  0.50000000  1.0
+  O  O4  12  0.21749741  0.78234140  0.06787533  1.0
+  O  O5  6  0.16210841  0.44039699  0.50000000  1.0
+# generated using pymatgen
+data_BaFeO3
+_symmetry_space_group_name_H-M   Cmmm
+_cell_length_a   10.14164341
+_cell_length_b   15.61552953
+_cell_length_c   13.05420042
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   65
+_chemical_formula_structural   BaFeO3
+_chemical_formula_sum   'ID_1'
+_cell_volume   2067.35628433
+_cell_formula_units_Z   12
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+  2  '-x, -y, -z'
+  3  '-x, -y, z'
+  4  'x, y, -z'
+  5  'x, -y, -z'
+  6  '-x, y, z'
+  7  '-x, y, -z'
+  8  'x, -y, z'
+  9  'x+1/2, y+1/2, z'
+  10  '-x+1/2, -y+1/2, -z'
+  11  '-x+1/2, -y+1/2, z'
+  12  'x+1/2, y+1/2, -z'
+  13  'x+1/2, -y+1/2, -z'
+  14  '-x+1/2, y+1/2, z'
+  15  '-x+1/2, y+1/2, -z'
+  16  'x+1/2, -y+1/2, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  8  0.25000000  0.25000000  0.17443006  1.0
+  Ba  Ba1  2  0.00000000  0.00000000  0.00000000  1.0
+  Ba  Ba2  2  0.00000000  0.00000000  0.50000000  1.0
+  Fe  Fe3  8  0.00000000  0.07554096  0.25287013  1.0
+  Fe  Fe4  4  0.11901015  0.50000000  0.50000000  1.0
+  O  O5  16  0.06388720  0.37049426  0.17402854  1.0
+  O  O6  16  0.06847517  0.41094920  0.39583292  1.0
+  O  O7  4  0.25000000  0.25000000  0.00000000  1.0
+# generated using pymatgen
+data_BaFeO3
+_symmetry_space_group_name_H-M   P-6
+_cell_length_a   6.95417249
+_cell_length_b   6.95417249
+_cell_length_c   13.31203074
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   120.00000000
+_symmetry_Int_Tables_number   174
+_chemical_formula_structural   BaFeO3
+_chemical_formula_sum   'ID_2'
+_cell_volume   557.52694440
+_cell_formula_units_Z   6
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+  2  '-x+y, -x, -z'
+  3  '-y, x-y, z'
+  4  'x, y, -z'
+  5  '-x+y, -x, z'
+  6  '-y, x-y, -z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  6  0.01376365  0.36103590  0.37855223  1.0
+  Fe  Fe1  6  0.34697147  0.15330972  0.13416697  1.0
+  O  O2  6  0.03155811  0.72265100  0.24935398  1.0
+  O  O3  6  0.14548894  0.82346164  0.14898546  1.0
+  O  O4  3  0.33799068  0.26405198  0.50000000  1.0
+  O  O5  2  0.66666667  0.33333333  0.11403766  1.0
+  O  O6  1  0.33333333  0.66666667  0.50000000  1.0
+# generated using pymatgen
+data_BaFeO3
+_symmetry_space_group_name_H-M   Immm
+_cell_length_a   8.05802800
+_cell_length_b   9.73360619
+_cell_length_c   16.52508848
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   71
+_chemical_formula_structural   BaFeO3
+_chemical_formula_sum   'ID_3'
+_cell_volume   1296.12335704
+_cell_formula_units_Z   12
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+  2  '-x, -y, -z'
+  3  '-x, -y, z'
+  4  'x, y, -z'
+  5  'x, -y, -z'
+  6  '-x, y, z'
+  7  '-x, y, -z'
+  8  'x, -y, z'
+  9  'x+1/2, y+1/2, z+1/2'
+  10  '-x+1/2, -y+1/2, -z+1/2'
+  11  '-x+1/2, -y+1/2, z+1/2'
+  12  'x+1/2, y+1/2, -z+1/2'
+  13  'x+1/2, -y+1/2, -z+1/2'
+  14  '-x+1/2, y+1/2, z+1/2'
+  15  '-x+1/2, y+1/2, -z+1/2'
+  16  'x+1/2, -y+1/2, z+1/2'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  8  0.25000000  0.25000000  0.25000000  1.0
+  Ba  Ba1  4  0.00000000  0.27015020  0.00000000  1.0
+  Fe  Fe2  8  0.00000000  0.12401308  0.37732425  1.0
+  Fe  Fe3  4  0.00000000  0.31398506  0.50000000  1.0
+  O  O4  16  0.16125277  0.24354546  0.41070695  1.0
+  O  O5  8  0.08496807  0.50000000  0.26933163  1.0
+  O  O6  8  0.15021116  0.00000000  0.33010735  1.0
+  O  O7  2  0.00000000  0.50000000  0.00000000  1.0
+  O  O8  2  0.00000000  0.50000000  0.50000000  1.0
+# generated using pymatgen
+data_BaFeO3
+_symmetry_space_group_name_H-M   Pmn2_1
+_cell_length_a   8.24936971
+_cell_length_b   10.34978921
+_cell_length_c   6.95090842
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   31
+_chemical_formula_structural   BaFeO3
+_chemical_formula_sum   'ID_4'
+_cell_volume   593.46326197
+_cell_formula_units_Z   6
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+  2  '-x+1/2, -y, z+1/2'
+  3  '-x, y, z'
+  4  'x+1/2, -y, z+1/2'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  4  0.22900373  0.39036769  0.85299274  1.0
+  Ba  Ba1  2  0.00000000  0.75715265  0.78324753  1.0
+  Fe  Fe2  4  0.17503508  0.05695697  0.01245312  1.0
+  Fe  Fe3  2  0.00000000  0.93687934  0.33648026  1.0
+  O  O4  4  0.08710843  0.57602131  0.05598813  1.0
+  O  O5  4  0.15525816  0.82247856  0.46975917  1.0
+  O  O6  4  0.20396604  0.04797387  0.30733744  1.0
+  O  O7  2  0.00000000  0.17594417  0.93955525  1.0
+  O  O8  2  0.00000000  0.51681082  0.60719957  1.0
+  O  O9  2  0.00000000  0.92242438  0.05855177  1.0
+# generated using pymatgen
+data_BaFeO3
+_symmetry_space_group_name_H-M   Cccm
+_cell_length_a   6.58005817
+_cell_length_b   12.46672630
+_cell_length_c   15.11251863
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   66
+_chemical_formula_structural   BaFeO3
+_chemical_formula_sum   'ID_5'
+_cell_volume   1239.70686703
+_cell_formula_units_Z   12
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+  2  '-x, -y, -z'
+  3  '-x, -y, z'
+  4  'x, y, -z'
+  5  'x, -y, -z+1/2'
+  6  '-x, y, z+1/2'
+  7  '-x, y, -z+1/2'
+  8  'x, -y, z+1/2'
+  9  'x+1/2, y+1/2, z'
+  10  '-x+1/2, -y+1/2, -z'
+  11  '-x+1/2, -y+1/2, z'
+  12  'x+1/2, y+1/2, -z'
+  13  'x+1/2, -y+1/2, -z+1/2'
+  14  '-x+1/2, y+1/2, z+1/2'
+  15  '-x+1/2, y+1/2, -z+1/2'
+  16  'x+1/2, -y+1/2, z+1/2'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  8  0.00000000  0.00000000  0.14301163  1.0
+  Ba  Ba1  4  0.25000000  0.25000000  0.00000000  1.0
+  Fe  Fe2  8  0.00000000  0.27460636  0.25000000  1.0
+  Fe  Fe3  4  0.00000000  0.50000000  0.25000000  1.0
+  O  O4  16  0.03424757  0.20604606  0.14158781  1.0
+  O  O5  16  0.19868988  0.39835403  0.25940479  1.0
+  O  O6  4  0.25000000  0.25000000  0.50000000  1.0
+# generated using pymatgen
+data_BaFeO3
+_symmetry_space_group_name_H-M   Pm-3n
+_cell_length_a   10.65524381
+_cell_length_b   10.65524381
+_cell_length_c   10.65524381
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   223
+_chemical_formula_structural   BaFeO3
+_chemical_formula_sum   'ID_6'
+_cell_volume   1209.73480084
+_cell_formula_units_Z   6
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+  2  '-x, -y, -z'
+  3  '-y+1/2, x+1/2, z+1/2'
+  4  'y+1/2, -x+1/2, -z+1/2'
+  5  '-x, -y, z'
+  6  'x, y, -z'
+  7  'y+1/2, -x+1/2, z+1/2'
+  8  '-y+1/2, x+1/2, -z+1/2'
+  9  'x, -y, -z'
+  10  '-x, y, z'
+  11  '-y+1/2, -x+1/2, -z+1/2'
+  12  'y+1/2, x+1/2, z+1/2'
+  13  '-x, y, -z'
+  14  'x, -y, z'
+  15  'y+1/2, x+1/2, -z+1/2'
+  16  '-y+1/2, -x+1/2, z+1/2'
+  17  'z, x, y'
+  18  '-z, -x, -y'
+  19  'z+1/2, -y+1/2, x+1/2'
+  20  '-z+1/2, y+1/2, -x+1/2'
+  21  'z, -x, -y'
+  22  '-z, x, y'
+  23  'z+1/2, y+1/2, -x+1/2'
+  24  '-z+1/2, -y+1/2, x+1/2'
+  25  '-z, x, -y'
+  26  'z, -x, y'
+  27  '-z+1/2, -y+1/2, -x+1/2'
+  28  'z+1/2, y+1/2, x+1/2'
+  29  '-z, -x, y'
+  30  'z, x, -y'
+  31  '-z+1/2, y+1/2, x+1/2'
+  32  'z+1/2, -y+1/2, -x+1/2'
+  33  'y, z, x'
+  34  '-y, -z, -x'
+  35  'x+1/2, z+1/2, -y+1/2'
+  36  '-x+1/2, -z+1/2, y+1/2'
+  37  '-y, z, -x'
+  38  'y, -z, x'
+  39  '-x+1/2, z+1/2, y+1/2'
+  40  'x+1/2, -z+1/2, -y+1/2'
+  41  '-y, -z, x'
+  42  'y, z, -x'
+  43  '-x+1/2, -z+1/2, -y+1/2'
+  44  'x+1/2, z+1/2, y+1/2'
+  45  'y, -z, -x'
+  46  '-y, z, x'
+  47  'x+1/2, -z+1/2, y+1/2'
+  48  '-x+1/2, z+1/2, -y+1/2'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  6  0.00000000  0.00000000  0.50000000  1.0
+  Fe  Fe1  6  0.00000000  0.25000000  0.50000000  1.0
+  O  O2  16  0.21528655  0.21528655  0.21528655  1.0
+  O  O3  2  0.00000000  0.00000000  0.00000000  1.0
+# generated using pymatgen
+data_BaFeO3
+_symmetry_space_group_name_H-M   P6/mmm
+_cell_length_a   8.93007787
+_cell_length_b   8.93007787
+_cell_length_c   3.88132881
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   120.00000000
+_symmetry_Int_Tables_number   191
+_chemical_formula_structural   BaFeO3
+_chemical_formula_sum   'ID_7'
+_cell_volume   268.05354776
+_cell_formula_units_Z   3
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+  2  '-x, -y, -z'
+  3  'x-y, x, z'
+  4  '-x+y, -x, -z'
+  5  '-y, x-y, z'
+  6  'y, -x+y, -z'
+  7  '-x, -y, z'
+  8  'x, y, -z'
+  9  '-x+y, -x, z'
+  10  'x-y, x, -z'
+  11  'y, -x+y, z'
+  12  '-y, x-y, -z'
+  13  '-y, -x, -z'
+  14  'y, x, z'
+  15  '-x, -x+y, -z'
+  16  'x, x-y, z'
+  17  '-x+y, y, -z'
+  18  'x-y, -y, z'
+  19  'y, x, -z'
+  20  '-y, -x, z'
+  21  'x, x-y, -z'
+  22  '-x, -x+y, z'
+  23  'x-y, -y, -z'
+  24  '-x+y, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  3  0.00000000  0.50000000  0.00000000  1.0
+  Fe  Fe1  2  0.33333333  0.66666667  0.50000000  1.0
+  Fe  Fe2  1  0.00000000  0.00000000  0.00000000  1.0
+  O  O3  6  0.14478553  0.28957106  0.00000000  1.0
+  O  O4  2  0.33333333  0.66666667  0.00000000  1.0
+  O  O5  1  0.00000000  0.00000000  0.50000000  1.0
+# generated using pymatgen
+data_BaFeO3
+_symmetry_space_group_name_H-M   P-4n2
+_cell_length_a   7.27136432
+_cell_length_b   7.27136432
+_cell_length_c   10.13777470
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   118
+_chemical_formula_structural   BaFeO3
+_chemical_formula_sum   'ID_8'
+_cell_volume   536.01191636
+_cell_formula_units_Z   6
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+  2  'y, -x, -z'
+  3  '-x, -y, z'
+  4  '-y, x, -z'
+  5  '-x+1/2, y+1/2, z+1/2'
+  6  '-y+1/2, -x+1/2, -z+1/2'
+  7  'x+1/2, -y+1/2, z+1/2'
+  8  'y+1/2, x+1/2, -z+1/2'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  4  0.00000000  0.50000000  0.05670023  1.0
+  Ba  Ba1  2  0.00000000  0.00000000  0.00000000  1.0
+  Fe  Fe2  4  0.19942363  0.69942363  0.75000000  1.0
+  Fe  Fe3  2  0.00000000  0.00000000  0.50000000  1.0
+  O  O4  8  0.06218829  0.20512127  0.19063939  1.0
+  O  O5  8  0.11969690  0.79100633  0.57231413  1.0
+  O  O6  2  0.00000000  0.50000000  0.75000000  1.0
+# generated using pymatgen
+data_BaFeO3
+_symmetry_space_group_name_H-M   P3_212
+_cell_length_a   8.06821046
+_cell_length_b   8.06821046
+_cell_length_c   8.92723960
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   120.00000000
+_symmetry_Int_Tables_number   153
+_chemical_formula_structural   BaFeO3
+_chemical_formula_sum   'ID_9'
+_cell_volume   503.27140996
+_cell_formula_units_Z   6
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+  2  '-y, x-y, z+2/3'
+  3  '-x+y, -x, z+1/3'
+  4  '-y, -x, -z+1/3'
+  5  '-x+y, y, -z+2/3'
+  6  'x, x-y, -z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Ba  Ba0  3  0.21477557  0.42955113  0.33333333  1.0
+  Ba  Ba1  3  0.59382082  0.18764165  0.83333333  1.0
+  Fe  Fe2  6  0.08032244  0.21315292  0.99878150  1.0
+  O  O3  6  0.14882262  0.43950340  0.61692023  1.0
+  O  O4  6  0.22841910  0.08064603  0.15149174  1.0
+  O  O5  3  0.21475202  0.10737601  0.50000000  1.0
+  O  O6  3  0.57091734  0.14183468  0.33333333  1.0

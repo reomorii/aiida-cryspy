@@ -16,6 +16,7 @@ dependencies = [
 "aiida_cryspy.initial_structures" = "aiida_cryspy.workflows.initialize_WorkChain:initialize_workchain"
 "aiida_cryspy.optimize_structures"="aiida_cryspy.workflows.optimization_WorkChain:multi_structure_optimize_WorkChain"
 "aiida_cryspy.next_sg" = "aiida_cryspy.workflows.next_sg_WorkChain:next_sg_WorkChain"
+"aiida_cryspy.ea" = "aiida_cryspy.workflows.EA_WorkChain:EA_WorkChain"
 
 [project.entry-points."aiida.data"]
 "aiida_cryspy.dataframe" = "aiida_cryspy.data.dataframedata:DataframeData"

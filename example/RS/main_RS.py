@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from aiida.orm import Dict, load_code
+from aiida.orm import Dict, load_code,Group,Int,Str
 from aiida.engine import run
 from aiida.plugins import WorkflowFactory
 from aiida import load_profile
+import datetime
 
 load_profile()
 
@@ -12,6 +13,13 @@ load_profile()
 def main():
     # --- 1. 初期化ステップ (ループの外で一度だけ実行) ---
     print("--- start aiida-cryspy ---")
+
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    group_label = f"cryspy-test-run/{timestamp}"
+    group, _ = Group.objects.get_or_create(label=group_label)
+    print(f"--- Created Group<{group.pk}> with label '{group.label}' for this test run. ---")
+
+
     initialize_WorkChain = WorkflowFactory('aiida_cryspy.initial_structures')
     # run関数は (result, node) のタプルを直接返す
     result_init = run(initialize_WorkChain, cryspy_in_filename="cryspy_in")
@@ -19,7 +27,7 @@ def main():
     # ループで使う「状態変数」を初期化する
     # これらの変数は、ループの各世代で新しい値に更新されていく
     initial_structures_node = result_init['initial_structures']
-    opt_structures_node = result_init['opt_structures']
+    #opt_structures_node = result_init['opt_structures']
     rslt_data_node = result_init['rslt_data']
     id_queueing_node = result_init['id_queueing']
     detail_data_node = result_init['detail_data']
@@ -60,26 +68,30 @@ def main():
         "resources": {'tot_num_mpiprocs': 2, 'parallel_env': 'smp'},
         'max_wallclock_seconds': 600,
         'prepend_text': prepend_commands,
-        'queue_name': 'ibis3.q@ibis32'
+        'queue_name': 'ibis2.q'
     })
 
     # --- 2a. 構造最適化 ---
     print(f"   optimization: ")
     optimize_inputs = {
         'initial_structures': initial_structures_node, # 現在の世代の入力
-        'opt_structures': opt_structures_node,         # 前の世代の結果
+        #'opt_structures': opt_structures_node,         # 前の世代の結果
         'id_queueing': id_queueing_node,               # 現在の世代の入力
         'rslt_data': rslt_data_node,                   # 前の世代の結果
         'cryspy_in': cryspy_in_node,
         'detail_data': detail_data_node,               # 現在の世代の入力
         "code": code,
         "parameters": parameters,
-        "options": options
+        "options": options,
+        "structures_group_pk": Int(group.pk)
     }
 
     optimize_WorkChain = WorkflowFactory('aiida_cryspy.optimize_structures')
     result_opt = run(optimize_WorkChain, **optimize_inputs)
-    print("    Optimization completed")
+
+    print("\n--- Optimization completed ---")
+    print(f"optimize_WorkChain finished")
+
 
 if __name__ == "__main__":
     main()

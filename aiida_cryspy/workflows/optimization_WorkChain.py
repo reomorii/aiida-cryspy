@@ -1,4 +1,4 @@
-from aiida.orm import Dict,List,Code,ArrayData,RemoteData,FolderData
+from aiida.orm import Int,Dict,List,Code,ArrayData,RemoteData,FolderData,load_group
 from aiida.engine import WorkChain,calcfunction,ToContext,while_
 from aiida.plugins import DataFactory
 import os
@@ -7,26 +7,26 @@ from cryspy.job import ctrl_job
 from aiida_mlip.data.model import ModelData
 
 StructureCollectionData = DataFactory("aiida_cryspy.structurecollection")
-PandasFrameData = DataFactory('aiida_cryspy.dataframe')
-RinData = DataFactory('aiida_cryspy.rin_data')
-EAData = DataFactory('aiida_cryspy.ea_data')
-StructureData = DataFactory('core.structure')
+PandasFrameData = DataFactory("aiida_cryspy.dataframe")
+RinData = DataFactory("aiida_cryspy.rin_data")
+EAData = DataFactory("aiida_cryspy.ea_data")
+StructureData = DataFactory("core.structure")
 
 
 class optimization_WorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super().define(spec)
-        spec.input("code", valid_type=Code, help='label of your code')
-        spec.input("structure", valid_type=StructureData, help='selected structure for optimization')
-        spec.input('parameters', valid_type=Dict)
-        spec.input('options', valid_type=Dict, default=Dict, help='metadata.options')
+        spec.input("code", valid_type=Code, help="label of your code")
+        spec.input("structure", valid_type=StructureData, help="selected structure for optimization")
+        spec.input("parameters", valid_type=Dict)
+        spec.input("options", valid_type=Dict, default=Dict, help="metadata.options")
 
-        spec.output("remote_folder",valid_type=RemoteData, help='remote folder of the workchain')
-        spec.output("retrieved", valid_type=FolderData, help='retrieved data from the workchain')
-        spec.output("structure", valid_type=StructureData, help='optimized structure from the workchain')
-        spec.output("array", valid_type=ArrayData, help='array data from the workchain')
-        spec.output("parameters", valid_type=Dict, help='output parameters from the workchain')
+        spec.output("remote_folder", valid_type=RemoteData, help="remote folder of the workchain")
+        spec.output("retrieved", valid_type=FolderData, help="retrieved data from the workchain")
+        spec.output("structure", valid_type=StructureData, help="optimized structure from the workchain")
+        spec.output("array", valid_type=ArrayData, help="array data from the workchain")
+        spec.output("parameters", valid_type=Dict, help="output parameters from the workchain")
 
         spec.outline(
             cls.submit_workchains,
@@ -51,8 +51,8 @@ class optimization_WorkChain(WorkChain):
         builder.parameters = self.inputs.parameters
         builder.metadata.options = self.inputs.options.get_dict()
         # builder.metadata.options.max_wallclock_seconds = 1 * 30 * 60
-        builder.metadata.options.parser_name = 'ase.ase'
-        builder.metadata.options.additional_retrieve_list = ['opt.traj', 'opt_struc.vasp']
+        builder.metadata.options.parser_name = "ase.ase"
+        builder.metadata.options.additional_retrieve_list = ["opt.traj", "opt_struc.vasp"]
         # submit workchain
         future = self.submit(builder)
         return ToContext(my_future=future)
@@ -62,15 +62,15 @@ class optimization_WorkChain(WorkChain):
         #sleepを入れて並列を確認
         calculations = self.ctx.my_future
 
-        if 'remote_folder' in calculations.outputs:
+        if "remote_folder" in calculations.outputs:
             self.out("remote_folder", calculations.outputs.remote_folder)
-        if 'array' in calculations.outputs:
+        if "array" in calculations.outputs:
             self.out("array", calculations.outputs.array)
-        if 'retrieved' in calculations.outputs:
+        if "retrieved" in calculations.outputs:
             self.out("retrieved", calculations.outputs.retrieved)
-        if 'parameters' in calculations.outputs:
+        if "parameters" in calculations.outputs:
             self.out("parameters", calculations.outputs.parameters)
-        if 'structure' in calculations.outputs:
+        if "structure" in calculations.outputs:
             self.out("structure", calculations.outputs.structure)
 
 
@@ -93,20 +93,20 @@ def pack_results(**kwargs):
             grouped_data[id_] = {}
 
         # キーのプレフィックスでresultかstructureかを判断
-        if key.startswith('parameters_'):
-            grouped_data[id_]['parameters'] = node
-        elif key.startswith('structure_'):
-            grouped_data[id_]['structure'] = node
+        if key.startswith("parameters_"):
+            grouped_data[id_]["parameters"] = node
+        elif key.startswith("structure_"):
+            grouped_data[id_]["structure"] = node
 
     # グループ化されたデータを処理
     for id_, data in grouped_data.items():
         # parametersノードからエネルギーを取得
-        energy = data['parameters'].get_dict().get('total_energy')
+        energy = data["parameters"].get_dict().get("total_energy")
 
         # structureノードからpymatgenオブジェクトを取得し、JSON互換の辞書に変換
-        struc_dict = data['structure'].get_pymatgen().as_dict()
+        struc_dict = data["structure"].get_pymatgen().as_dict()
 
-        final_results[id_] = {'energy': energy, 'structure': struc_dict}
+        final_results[id_] = {"energy": energy, "structure": struc_dict}
 
     # Python辞書をAiiDAのDictノードとして返す
     return Dict(dict=final_results)
@@ -116,28 +116,25 @@ class multi_structure_optimize_WorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super().define(spec)
-        spec.input("initial_structures", valid_type=StructureCollectionData, help='initial structure data for optimization')
-        spec.input("opt_structures", valid_type=StructureCollectionData, help='optimized structure data')
-        spec.input("rslt_data", valid_type=PandasFrameData, help='result data in Pandas DataFrame format')
-        spec.input("cryspy_in", valid_type=RinData, help='RinData for cryspy input')
-        spec.input("detail_data",valid_type=(Dict,EAData), help='EA data for optimization')
-        spec.input("id_queueing", valid_type=List, help='list of IDs for queuing structures for optimization')
-        spec.input("code", valid_type=Code, help='label of your code')
-        spec.input("potential", valid_type=ModelData, required=False, help='MLIP model data')
-        spec.input("parameters", valid_type=Dict, help='calculation parameters')
-        spec.input("options", valid_type=Dict, default=Dict, help='metadata.options')
+        spec.input("initial_structures", valid_type=StructureCollectionData, help="initial structure data for optimization")
+        #spec.input("opt_structures", valid_type=StructureCollectionData, help='optimized structure data')
+        spec.input("rslt_data", valid_type=PandasFrameData, help="result data in Pandas DataFrame format")
+        spec.input("cryspy_in", valid_type=RinData, help="RinData for cryspy input")
+        spec.input("detail_data", valid_type=(Dict, EAData), help="EA data for optimization")
+        spec.input("id_queueing", valid_type=List, help="list of IDs for queuing structures for optimization")
+        spec.input("code", valid_type=Code, help="label of your code")
+        spec.input("potential", valid_type=ModelData, required=False, help="MLIP model data")
+        spec.input("parameters", valid_type=Dict, help="calculation parameters")
+        spec.input("options", valid_type=Dict, default=Dict, help="metadata.options")
+        spec.input("structures_group_pk", valid_type=Int, help="PK of the group to store optimized structures.")
 
-        spec.output("structure_energy_data", valid_type=Dict, help='sorted energy results with structure data')
-        spec.output("opt_struc_data", valid_type=StructureCollectionData, help='optimized structure data')
-        spec.output("rslt_data", valid_type=PandasFrameData, help='result data in Pandas DataFrame format')
+        spec.output("structure_energy_data", valid_type=Dict, help="sorted energy results with structure data")
+        #spec.output("opt_struc_data", valid_type=StructureCollectionData, help='optimized structure data')
+        spec.output("rslt_data", valid_type=PandasFrameData, help="result data in Pandas DataFrame format")
         spec.output_namespace("structure", valid_type=StructureData, dynamic=True)
 
-        spec.exit_code(300, 'ERROR_SUB_PROCESS_FAILED', message='One or more subprocesses failed.')
+        spec.exit_code(300, "ERROR_SUB_PROCESS_FAILED", message="One or more subprocesses failed.")
 
-        # spec.outline(
-        #     cls.optimize,
-        #     cls.collect_results
-        # )
 
         spec.outline(
             cls.setup,
@@ -208,8 +205,12 @@ class multi_structure_optimize_WorkChain(WorkChain):
 
 
     def collect_results(self):
+
+        group = load_group(pk = self.inputs.structures_group_pk.value)
+
         init_struc_data = self.inputs.initial_structures.structurecollection
-        opt_struc_data = self.inputs.opt_structures.structurecollection
+        #opt_struc_data = self.inputs.opt_structures.structurecollection
+        opt_struc_data = {}
         calcfunc_inputs = {}
 
         # ---------- mkdir work/fin
@@ -248,14 +249,26 @@ class multi_structure_optimize_WorkChain(WorkChain):
             # os.makedirs(f'work/{cid}',exist_ok=True)
             # work_path = f'work/{cid}/'
 
+
+            opt_struc_node = results_node.outputs.structure
+
+            # 1. 最適化済み構造ノードに、cryspyのIDをextraとして記録
+            opt_struc_node.base.extras.set('cryspy_id', cid)
+            # 2. そのノードをGroupに追加
+            group.add_nodes(opt_struc_node)
+            self.report(f"Added StructureData<{opt_struc_node.pk}> with cryspy_id={cid} to Group<{group.pk}>")
+
             if rin.algo == "RS":
                 gen_ = None
 
             elif rin.algo == "EA":
                 gen_ = self.inputs.detail_data.ea_data[0]  # EADataから世代情報を取得
 
+
+            print(f"Current working directory opt: {os.getcwd()}") # 現在のディレクトリを確認
+
             #cryspyによる結果の保存
-            opt_struc_data, rslt_data = ctrl_job.regist_opt(
+            _, rslt_data = ctrl_job.regist_opt(
                 rin,
                 cid,
                 init_struc_data,
@@ -276,9 +289,9 @@ class multi_structure_optimize_WorkChain(WorkChain):
             structure_energy_data_results = pack_results(**calcfunc_inputs)
             self.out("structure_energy_data", structure_energy_data_results)
 
-        opt_struc_node = StructureCollectionData(structures=opt_struc_data)
-        opt_struc_node.store()
-        self.out('opt_struc_data', opt_struc_node)
+        #opt_struc_node = StructureCollectionData(structures=opt_struc_data)
+        #opt_struc_node.store()
+        #self.out('opt_struc_data', opt_struc_node)
 
         rslt_node = PandasFrameData(rslt_data)
         rslt_node.store()

@@ -1,0 +1,6 @@
+   Gen  Opt Magmom  Spg_num Spg_sym   E_eV_atom Spg_num_opt Spg_sym_opt
+0    1    8     Cm        8      Cm -182.039978        None        None
+1    1   37   Ccc2       37    Ccc2 -181.113464        None        None
+2    1  204   Im-3      204    Im-3 -157.966324        None        None
+3    1  147    P-3      162   P-31m -181.097458        None        None
+4    1  195    P23      195     P23 -140.672653        None        None
