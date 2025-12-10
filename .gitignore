@@ -1,0 +1,36 @@
+#__pycache__ というフォルダはどの階層にあっても無視
+__pycache__/
+
+# 拡張子が.pycのファイルは無視
+*.pyc
+
+# .DS_Store ファイルは無視
+# **念の為、どんなに深い階層の.DS_Storeでも無視
+.DS_Store
+**/.DS_Store
+
+
+# "data" という名前のフォルダはどの階層にあっても無視
+data/
+backup/
+**/backup/
+
+# CrySPYの出力ファイル
+cryspy.out
+cryspy.stat
+lock_cryspy
+err_cryspy
+log_cryspy
+
+
+*.cif
+POSCAR
+CONTCAR
+OUTCAR
+vasprun.xml
+*.pdf
+*.pkl
+
+# aiida_cryspy/data フォルダとその中身は無視しない
+!aiida_cryspy/data/
+!aiida_cryspy/data/**

@@ -1,4 +1,4 @@
-from aiida.orm import Dict,Str,List
+from aiida.orm import Dict,Str,List,Int,Group
 from aiida.engine import WorkChain,ToContext,calcfunction
 from aiida.plugins import DataFactory
 from cryspy.start import cryspy_init
@@ -11,22 +11,6 @@ EAData = DataFactory("aiida_cryspy.ea_data")
 StructureData = DataFactory("core.structure")
 
 
-@calcfunction
-def initialize_cryspy_data():
-
-    import os
-    print(f"Current working directory next_sg: {os.getcwd()}") # 現在のディレクトリを確認
-    init_struc_data, _, rin, rslt_data, detail_data, id_queueing = cryspy_init.initialize()
-
-    return {
-        "initial_structures": StructureCollectionData(structures=init_struc_data),
-        "cryspy_in": RinData(rin),
-        "rslt_data": PandasFrameData(rslt_data),
-        "detail_data": EAData(detail_data) if rin.algo == "EA" else Dict(dict=detail_data),
-        "id_queueing": List(list=id_queueing),
-    }
-
-
 class initialize_workchain(WorkChain):
 
     @classmethod
@@ -34,8 +18,8 @@ class initialize_workchain(WorkChain):
         super().define(spec)
         spec.input("cryspy_in_filename", valid_type=Str)
 
-        spec.output("initial_structures",valid_type=StructureCollectionData)
-        #spec.output("opt_structures",valid_type=StructureCollectionData)
+        spec.output("initial_structures_group_pk", valid_type=Int)
+        spec.output("optimized_structures_group_pk", valid_type=Int)
         spec.output("rslt_data", valid_type=PandasFrameData)
         spec.output("cryspy_in", valid_type=RinData)
         spec.output("detail_data", valid_type=(Dict, EAData))
@@ -76,21 +60,71 @@ class initialize_workchain(WorkChain):
 
         # calcfunctionを呼び出して結果をAiiDAノードに変換
 
-        print(f"Current working directory init: {os.getcwd()}") # 現在のディレクトリを確認
-        results = initialize_cryspy_data()
-        self.ctx.results = results
-        self.report("Data generation finished and converted to AiiDA nodes.")
+        # print(f"Current working directory init: {os.getcwd()}") # 現在のディレクトリを確認
+ 
+        init_struc_data, _, rin, rslt_data, detail_data, id_queueing = cryspy_init.initialize()
+
+        # グループの作成
+        group_label = f"cryspy_gen_1_init_{self.uuid}"
+        group = Group(label=group_label)
+        group.store()
+
+        # 構造を1つずつ保存してGroupに入れる
+        for cid, pmg_struct in init_struc_data.items():
+            s_node = StructureData(pymatgen=pmg_struct)
+            s_node.base.extras.set('cryspy_id', cid) # IDを付与
+            s_node.store()
+            group.add_nodes(s_node)
+
+        self.report(f"Stored {len(init_struc_data)} structures to Group<{group.pk}>.")
+        
+        optimized_group_label = f"cryspy_optimized_{self.uuid}"
+        optimized_group = Group(label=optimized_group_label)
+        optimized_group.store()
+
+        # 結果をContextに保存
+        self.ctx._init_group_pk = group.pk
+        self.ctx._optimized_group_pk = optimized_group.pk
+        self.ctx.rin = rin
+        self.ctx.rslt_data = rslt_data
+        self.ctx.detail_data = detail_data
+        self.ctx.id_queueing = id_queueing
 
     def set_outputs_and_cleanup(self):
         """
-        出力を設定し、後片付けを行う。
+        出力を設定
         """
-        # WorkChainの出力に結果を接続
-        self.out("initial_structures", self.ctx.results["initial_structures"])
-        self.out("cryspy_in", self.ctx.results["cryspy_in"])
-        self.out("rslt_data", self.ctx.results["rslt_data"])
-        self.out("detail_data", self.ctx.results["detail_data"])
-        self.out("id_queueing", self.ctx.results["id_queueing"])
+
+        group_pk_node = Int(self.ctx._init_group_pk)
+        group_pk_node.store()
+        self.out("initial_structures_group_pk", group_pk_node)
+
+        optimized_group_pk_node = Int(self.ctx._optimized_group_pk)
+        optimized_group_pk_node.store()
+        self.out("optimized_structures_group_pk", optimized_group_pk_node)
+
+        # RinData
+        rin_data_node = RinData(self.ctx.rin)
+        rin_data_node.store()
+        self.out("cryspy_in", rin_data_node)
+
+        # Result Data
+        rslt_data_node = PandasFrameData(self.ctx.rslt_data)
+        rslt_data_node.store()
+        self.out("rslt_data", rslt_data_node)
+
+        # Detail Data
+        if self.ctx.rin.algo == "EA":
+            detail_data_node = EAData(self.ctx.detail_data)
+        else:
+            detail_data_node = Dict(dict=self.ctx.detail_data)
+        detail_data_node.store()
+        self.out("detail_data", detail_data_node)
+
+        # ID Queueing
+        id_queueing_node = List(list=self.ctx.id_queueing)
+        id_queueing_node.store()
+        self.out("id_queueing", id_queueing_node)
 
         # lock_cryspyの削除 (action.initialize()の末尾部分を再現)
         if os.path.isfile("lock_cryspy"):

@@ -1,4 +1,4 @@
-from aiida.orm import List,Int,load_group
+from aiida.orm import List,Int,load_group,Group
 from aiida.engine import WorkChain,calcfunction
 from aiida.plugins import DataFactory
 from cryspy.job import ctrl_job
@@ -9,86 +9,22 @@ RinData = DataFactory("aiida_cryspy.rin_data")
 EAData = DataFactory("aiida_cryspy.ea_data")
 StructureData = DataFactory("core.structure")
 
-@calcfunction
-def next_sg_gen_cryspy(**kwargs):
-
-    rin = kwargs["cryspy_in"].rin
-    detail_data = kwargs["detail_data"]
-    print("\n--- Contents of detail_data (input) ---")
-    # detail_data は EAData 型なので、その中の ea_data 属性を表示します
-    print(detail_data.ea_data)
-    print("----------------------------------------\n")
-    # --------------------------------
-    gen = kwargs["detail_data"].ea_data[0]
-    init_struc_data = kwargs["initial_structures"].structurecollection
-    rslt_data = kwargs["rslt_data"].df
-    group_pk = kwargs["structures_group_pk"].value
-
-    go_next_sg = True
-    nat_data = None #組成可変のもの
-    structure_mol_id = None
-
-
-    # Groupから最適化済み構造を読み込み、辞書を再構築する
-    group = load_group(pk=group_pk)
-    opt_struc_data = {}
-    for node in group.nodes:
-        # extraに保存したIDを取得
-        cid = node.base.extras.get("cryspy_id")
-        # cidをキーとしてpymatgenオブジェクトを辞書に格納
-        opt_struc_data[cid] = node.get_pymatgen()
-
-    # --- opt_struc_data の中身を表示 ---
-    print("\n--- Contents of opt_struc_data ---")
-    # 辞書の各要素（IDと構造）をループで表示します
-    for cryspy_id, structure in opt_struc_data.items():
-        print(f"  ID: {cryspy_id}")
-        # structureはpymatgenオブジェクトなので、そのままprintすると要約情報が表示されます
-        print(f"  Structure: {structure}")
-        print("-" * 20)
-    print("----------------------------------\n")
-    # ------------------------------------
-
-
-    # import os
-    # print(f"Current working directory next_sg: {os.getcwd()}") # 現在のディレクトリを確認
-
-    # print(f"--- Inside calcfunction ---")
-    # print(f"os.getcwd() reports: {os.getcwd()}")
-    # print(f"Actual contents of this directory: {os.listdir('.')}") # この行を追加
-    # print(f"--------------------------")
-
-    init_struc, id_queueing, ea_data_node, rslt_data = ctrl_job.next_gen_EA(
-        rin,
-        gen,
-        go_next_sg,
-        init_struc_data,
-        opt_struc_data,
-        rslt_data,
-        nat_data,
-        structure_mol_id
-    )
-
-    return {
-        "next_structures": StructureCollectionData(structures=init_struc),
-        "id_queueing": List(list=id_queueing),
-        "detail_data": EAData(ea_data=ea_data_node),
-        "rslt_data": PandasFrameData(rslt_data),
-    }
-
 
 class next_sg_WorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super().define(spec)
-        spec.input("initial_structures", valid_type=StructureCollectionData)
+        # spec.input("initial_structures", valid_type=StructureCollectionData)
+        spec.input("initial_structures_group_pk", valid_type=Int, help="PK of the group containing optimized structures from previous generation")
+        spec.input("optimized_structures_group_pk", valid_type=Int, help="PK of the group containing OPTIMIZED structures (Post-optimization)")
         #spec.input("opt_structures", valid_type=StructureCollectionData)
         spec.input("rslt_data", valid_type=PandasFrameData)
         spec.input("detail_data", valid_type=EAData)
         spec.input("cryspy_in", valid_type=RinData, help='cryspy input data')
-        spec.input("structures_group_pk", valid_type=Int, help='PK of the group with optimized structures.')
+        # spec.input("structures_group_pk", valid_type=Int, help='PK of the group with optimized structures.')
 
-        spec.output("next_structures", valid_type=StructureCollectionData, help='next generation structures')
+        # spec.output("next_structures", valid_type=StructureCollectionData, help='next generation structures')
+        spec.output("next_structures_group_pk", valid_type=Int, help='PK of the group containing next generation structures')
         spec.output("rslt_data",valid_type=PandasFrameData, help='result data in Pandas DataFrame format')
         spec.output("detail_data", valid_type=EAData, help='evolutionary algorithm data for next generation')
         spec.output("id_queueing", valid_type=List, help='queueing ids for next generation')
@@ -101,91 +37,98 @@ class next_sg_WorkChain(WorkChain):
 
     def call_next_sg(self):
 
-        # rin_data = self.inputs.cryspy_in        # rin オブジェクトを取り出す
-        # rin = rin_data.rin  # ← Python オブジェクトとして使用可能
 
-        # gen = self.inputs.detail_data.ea_data[0]  # gen（世代）を取得
 
-        # init_struc_data = self.inputs.initial_structures.structurecollection
-        # #opt_struc_data = self.inputs.opt_structures.structurecollection
-        # rslt_data = self.inputs.rslt_data.df
+        self.report("Starting next structure generation...")
 
-        # group_pk = self.inputs.structures_group_pk.value
 
-        # inputs = {
-        #             'rin': rin,
-        #             'gen': gen,
-        #             'initial_structures': init_struc_data,
-        #             'rslt_data': rslt_data,
-        #             'structures_group_pk': group_pk,
-        #         }
+        # 1. 最適化「前」の構造データを復元 (init_struc_data)
+        init_group_pk = self.inputs.initial_structures_group_pk.value
+        init_group = load_group(pk=init_group_pk)
 
-        # self.report(f"Reconstructed {len(opt_struc_data)} optimized structures from Group<{group.pk}>.")
-        # import time
-        # self.report("Pausing for 50 seconds to ensure file system consistency...")
-        # time.sleep(50)
-        # self.report("Wait finished, proceeding with next generation.")
+        init_struc_data = {}
+        for node in init_group.nodes:
+            cid = node.base.extras.get("cryspy_id")
+            if cid is not None:
+                init_struc_data[cid] = node.get_pymatgen()
 
-        # import os
-        # self.report("--- START: Listing contents of the current working directory ---")
+        # 2. 最適化「後」の構造データを復元 (opt_struc_data)
+        opt_group_pk = self.inputs.optimized_structures_group_pk.value
+        opt_group = load_group(pk=opt_group_pk)
 
-        # # 現在の作業ディレクトリのパスを取得
-        # cwd = os.getcwd()
-        # self.report(f"Current Path: {cwd}")
+        opt_struc_data = {}
+        for node in opt_group.nodes:
+            cid = node.base.extras.get("cryspy_id")
+            if cid is not None:
+                opt_struc_data[cid] = node.get_pymatgen()
 
-        # # os.walkを使って、カレントディレクトリ以下の全ファイルと全フォルダをリストアップ
-        # file_list = []
-        # for root, dirs, files in os.walk(cwd):
-        #     # 現在調べているフォルダのパスを表示
-        #     path = root.split(os.sep)
-        #     self.report(f"Directory: {os.path.join(*path)}")
 
-        #     # そのフォルダ内にあるサブフォルダの一覧を表示
-        #     for d in dirs:
-        #         self.report(f"  Sub-directory: {d}")
 
-        #     # そのフォルダ内にあるファイルの一覧を表示
-        #     for f in files:
-        #         self.report(f"  File: {f}")
-        # #         file_list.append(os.path.join(root, f))
+        rin = self.inputs.cryspy_in.rin
+        gen = self.inputs.detail_data.ea_data[0]
+        rslt_data = self.inputs.rslt_data.df
+        go_next_sg = True
+        nat_data = None #組成可変のもの
+        structure_mol_id = None
 
-        # if not file_list:
-        #     self.report("!!! WARNING: The working directory is EMPTY. No files or folders found. !!!")
+        self.report(f"Generating generation {gen + 1} from {len(opt_struc_data)} parent structures.")
 
-        # self.report("--- END: Directory listing complete ---")
+        # 2. 次世代生成ロジックの実行
+        # ctrl_job.next_gen_EA を直接呼び出します
+        # (calcfunctionにすると戻り値の構造辞書が巨大になりDBエラーになるため)
+        next_struc_dict, id_queueing, ea_data, rslt_data_new = ctrl_job.next_gen_EA(
+            rin,
+            gen,
+            go_next_sg,
+            init_struc_data,
+            opt_struc_data,
+            rslt_data,
+            nat_data,
+            structure_mol_id
+        )
 
-        inputs = self.inputs
-        results = next_sg_gen_cryspy(**inputs)
-        self.ctx.results = results
-        self.report("next_sg_gen_cryspy() has been called to generate next generation structures.")
+        # 3. 新しいGroupの作成と保存
+        # 次世代の番号
+        next_gen = gen + 1
+        new_group_label = f"cryspy_gen_{next_gen}_init_{self.uuid}"
+        output_group = Group(label=new_group_label)
+        output_group.store()
 
-        # self.out("next_structures", StructureCollectionData(structures=results["next_structures"]))
-        # self.out("id_queueing", List(list=results["id_queueing"]))
-        # self.out("detail_data", EAData(ea_data=results["detail_data"]))
-        # self.out("rslt_data", PandasFrameData(df=results["rslt_data"])))
+        self.report(f"Storing {len(next_struc_dict)} next generation structures to Group<{output_group.pk}>")
 
-        # next_struc_node = StructureCollectionData(structures=results["next_structures"])
-        # next_struc_node.store()
-        # self.out("next_structures", next_struc_node)
+        # 構造を保存してGroupに追加
+        for cid, pmg_struct in next_struc_dict.items():
+            # AiiDAのStructureDataに変換
+            s_node = StructureData(pymatgen=pmg_struct)
+            # CrySPY ID を extra に付与
+            s_node.base.extras.set('cryspy_id', cid)
+            # 保存
+            s_node.store()
+            # グループに追加
+            output_group.add_nodes(s_node)
 
-        # id_queueing_node = List(list=results["id_queueing"])
-        # id_queueing_node.store()
-        # self.out("id_queueing", id_queueing_node)
+        # 6. コンテキストに保存
+        self.ctx.next_group_pk = output_group.pk
+        self.ctx.rslt_data = rslt_data_new
+        self.ctx.detail_data = ea_data
+        self.ctx.id_queueing = id_queueing
 
-        # detail_data_node = EAData(ea_data=results["detail_data"])
-        # detail_data_node.store()
-        # self.out("detail_data", detail_data_node)
-
-        # rslt_node = PandasFrameData(results["rslt_data"])
-        # rslt_node.store()
-        # self.out("rslt_data", rslt_node)
-
+        self.report(f"Next generation (Gen {next_gen}) creation finished.")
 
     def set_outputs(self):
+        # 出力設定
+        next_group_pk_node = Int(self.ctx.next_group_pk)
+        next_group_pk_node.store()
+        self.out("next_structures_group_pk", next_group_pk_node)
 
-        # WorkChainの出力に結果を接続
-        self.out("next_structures", self.ctx.results["next_structures"])
-        self.out("rslt_data", self.ctx.results["rslt_data"])
-        self.out("detail_data", self.ctx.results["detail_data"])
-        self.out("id_queueing", self.ctx.results["id_queueing"])
+        rslt_data_node = PandasFrameData(self.ctx.rslt_data)
+        rslt_data_node.store()
+        self.out("rslt_data", rslt_data_node)
 
+        detail_data_node = EAData(ea_data=self.ctx.detail_data)
+        detail_data_node.store()
+        self.out("detail_data", detail_data_node)
+
+        id_queueing_node = List(list=self.ctx.id_queueing)
+        id_queueing_node.store()
+        self.out("id_queueing", id_queueing_node)

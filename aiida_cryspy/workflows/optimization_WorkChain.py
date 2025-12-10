@@ -1,7 +1,9 @@
-from aiida.orm import Int,Dict,List,Code,ArrayData,RemoteData,FolderData,load_group
-from aiida.engine import WorkChain,calcfunction,ToContext,while_
+from aiida.orm import Int,Dict,List,Code,ArrayData,RemoteData,FolderData,load_group,Group
+from aiida.engine import WorkChain,calcfunction,ToContext,while_,append_
 from aiida.plugins import DataFactory
+from ase.units import GPa  # 圧力の単位（GPa）をASEの内部単位(eV/Å^3)に変換
 import os
+import uuid
 
 from cryspy.job import ctrl_job
 from aiida_mlip.data.model import ModelData
@@ -32,10 +34,6 @@ class optimization_WorkChain(WorkChain):
             cls.submit_workchains,
             cls.inspect_workchains
         )
-
-
-        # spec.output("retrieved", valid_type=FolderData)
-        # spec.output("opt_structure", valid_type=StructureData)
 
 
 
@@ -116,8 +114,8 @@ class multi_structure_optimize_WorkChain(WorkChain):
     @classmethod
     def define(cls, spec):
         super().define(spec)
-        spec.input("initial_structures", valid_type=StructureCollectionData, help="initial structure data for optimization")
-        #spec.input("opt_structures", valid_type=StructureCollectionData, help='optimized structure data')
+        spec.input("initial_structures_group_pk", valid_type=Int, help="PK of the group containing initial structures for optimization")
+        spec.input("optimized_structures_group_pk", valid_type=Int, help="PK of the group to store/accumulate optimized structures")
         spec.input("rslt_data", valid_type=PandasFrameData, help="result data in Pandas DataFrame format")
         spec.input("cryspy_in", valid_type=RinData, help="RinData for cryspy input")
         spec.input("detail_data", valid_type=(Dict, EAData), help="EA data for optimization")
@@ -126,10 +124,8 @@ class multi_structure_optimize_WorkChain(WorkChain):
         spec.input("potential", valid_type=ModelData, required=False, help="MLIP model data")
         spec.input("parameters", valid_type=Dict, help="calculation parameters")
         spec.input("options", valid_type=Dict, default=Dict, help="metadata.options")
-        spec.input("structures_group_pk", valid_type=Int, help="PK of the group to store optimized structures.")
 
         spec.output("structure_energy_data", valid_type=Dict, help="sorted energy results with structure data")
-        #spec.output("opt_struc_data", valid_type=StructureCollectionData, help='optimized structure data')
         spec.output("rslt_data", valid_type=PandasFrameData, help="result data in Pandas DataFrame format")
         spec.output_namespace("structure", valid_type=StructureData, dynamic=True)
 
@@ -164,33 +160,38 @@ class multi_structure_optimize_WorkChain(WorkChain):
 
 
     def submit_batch(self):
-        initial_structures_dict = self.inputs.initial_structures.structurecollection
-        calculations = {}
 
-        ids_this_batch = self.ctx.ids_to_process[:self.ctx.batch_size]
+        group_pk = self.inputs.initial_structures_group_pk.value
+        input_group = load_group(pk=group_pk)
+        current_batch_ids = self.ctx.ids_to_process[:self.ctx.batch_size]
 
-        for id in ids_this_batch:
-            structure_ = initial_structures_dict[id]
-            structure = StructureData(pymatgen=structure_)
-            structure.store()
-            self.out(f"structure.{id}", structure)
+        # Groupから必要なNodeを探すためのマップを作る
+        structure_map = {}
+        for node in input_group.nodes:
+            cid = node.base.extras.get('cryspy_id')
+            if cid in current_batch_ids:
+                structure_map[cid] = node
+
+        self.report(f"Submitting optimization for {len(structure_map)} structures.")
+
+        for cid,structure_node in structure_map.items():
+            structure_node.store()
+            self.out(f"structure.{cid}", structure_node)
 
             future = self.submit(optimization_WorkChain,
                 code=self.inputs.code,
-                structure=structure,
+                structure=structure_node,
                 parameters=self.inputs.parameters,
                 options=self.inputs.options,
             )
 
-            label = f"opt_{id}"  # IDを文字列としてラベル付け
-            calculations[label] = future
+            future.label = f"opt_{cid}"  # IDを文字列としてラベル付け
 
-        # 処理が終わったIDを全体のリストから削除
+            self.to_context(calculations=append_(future))
+
+        #処理した分を待ち行列から削除
         self.ctx.ids_to_process = self.ctx.ids_to_process[self.ctx.batch_size:]
-        self.report(f"Submitted a batch of {len(calculations)} calculations. "
-                            f"{len(self.ctx.ids_to_process)} calculations remaining.")
 
-        return ToContext(**calculations)
 
 
 
@@ -199,100 +200,154 @@ class multi_structure_optimize_WorkChain(WorkChain):
         """
         完了したバッチの結果を一時的に保存する。
         """
-        finished_batch = {key: self.ctx[key] for key in self.ctx if key.startswith('opt_')}
-        self.ctx.all_submitted_calcs.update(finished_batch)
+        # 結果を回収
+        for calculation in self.ctx.calculations:
+            # label ("opt_10") をキーにして保存 (辞書なので上書きされても害はないが、無駄な処理になる)
+            self.ctx.all_submitted_calcs[calculation.label] = calculation
+
+        # 【修正】処理が終わったらリストを空にする (次のバッチのためにリセット)
+        self.ctx.calculations = []
 
 
 
     def collect_results(self):
 
-        group = load_group(pk = self.inputs.structures_group_pk.value)
+        # RinDataと世代(gen)の取得（グループ名に使用するため先に取得）
+        rin_data = self.inputs.cryspy_in
+        rin = rin_data.rin
 
-        init_struc_data = self.inputs.initial_structures.structurecollection
-        #opt_struc_data = self.inputs.opt_structures.structurecollection
+        gen = 1 # デフォルト値 (RSの場合など)
+        if rin.algo == "EA":
+            # EADataの場合はリストから世代を取得
+            if isinstance(self.inputs.detail_data, Dict):
+                 gen = self.inputs.detail_data.get_dict().get("ea_data")[0]
+            else:
+                 gen = self.inputs.detail_data.ea_data[0]
+
+
+
+        # 初期構造辞書を復元
+        input_group = load_group(pk=self.inputs.initial_structures_group_pk.value)
+        init_struc_data = {}
+        for node in input_group.nodes:
+            cid = node.base.extras.get('cryspy_id')
+            if cid is not None:
+                init_struc_data[cid] = node.get_pymatgen()
+
+
+        # 全世代の最適化後の構造を辞書に復元
+        output_group = load_group(pk=self.inputs.optimized_structures_group_pk.value)
         opt_struc_data = {}
+        for node in output_group.nodes:
+            # extrasからIDを取得
+            cid = node.base.extras.get('cryspy_id')
+            if cid is not None:
+                # pymatgenオブジェクトに変換して辞書に格納
+                opt_struc_data[cid] = node.get_pymatgen()
+
         calcfunc_inputs = {}
 
-        # ---------- mkdir work/fin
-        # os.makedirs('work/fin', exist_ok=True)
-
         rslt_data_node = self.inputs.rslt_data
-        # pandas.DataFrame として取り出す
         rslt_data = rslt_data_node.df
 
 
-        #     # 成功判定のチェック
-        # for id, calculation in self.ctx.items():
-        #     if not calculation.is_finished_ok:
-        #         self.report(f'Sub-process for ID {id} failed with exit status {calculation.exit_status}')
-        #         return self.exit_codes.ERROR_SUB_PROCESS_FAILED
 
-            # 成功判定のチェック
-        for cid, results_node in self.ctx.all_submitted_calcs.items():
+        # 圧力設定の取得 (存在しなければ 0.0 GPa とする)
+        target_pressure_gpa = 0.0
+        try:
+            optimizer_params = self.inputs.parameters.get_dict().get('optimizer', {})
+            setup_params = optimizer_params.get('setup', {})
+            # キーが存在しない、または None の場合は 0.0 を採用
+            target_pressure_gpa = setup_params.get('scalar_pressure', 0.0)
+            if target_pressure_gpa is None:
+                target_pressure_gpa = 0.0
+        except Exception:
+            # 読み込みに失敗した場合も0.0 とする
+            self.report("Warning: Could not read scalar_pressure. Assuming 0.0 GPa.")
+            target_pressure_gpa = 0.0
+
+        #self.report(f"Collecting results using Target Pressure = {target_pressure_gpa} GPa")
+
+
+
+        # 4. 結果回収ループ
+        for label, results_node in self.ctx.all_submitted_calcs.items():
             if not results_node.is_finished_ok:
-                self.report(f'Sub-process for ID {cid} failed with exit status {results_node.exit_status}')
+                self.report(f'Sub-process {label} failed with exit status {results_node.exit_status}')
                 continue
-                # return self.exit_codes.ERROR_SUB_PROCESS_FAILED
 
-            calcfunc_inputs[f"parameters_{cid}"] = results_node.outputs.parameters
-            calcfunc_inputs[f"structure_{cid}"] = results_node.outputs.structure
+            cid_str = label.split('_')[-1]
+            cid = int(cid_str)
 
-            rin_data = self.inputs.cryspy_in        # rin オブジェクトを取り出す
-            rin = rin_data.rin                      # ← Python オブジェクトとして使用可能
+            calcfunc_inputs[f"parameters_{cid_str}"] = results_node.outputs.parameters
+            calcfunc_inputs[f"structure_{cid_str}"] = results_node.outputs.structure
 
-            energy = results_node.outputs.parameters['total_energy']  # 'total_energy' キーからエネルギーを取得
-            opt_struc = results_node.outputs.structure.get_pymatgen()
+            # Total Energy [eV]
+            energy = results_node.outputs.parameters['total_energy']
 
-            print("energy:", energy)
+            # Structure & Volume
+            structure_node = results_node.outputs.structure
+            opt_struc = structure_node.get_pymatgen()
+            volume = opt_struc.volume       # [A^3]
+            num_atoms = opt_struc.num_sites # [atoms]
 
-            cid = int(cid.split('_')[-1])  # IDを整数に変換
-            # os.makedirs(f'work/{cid}',exist_ok=True)
-            # work_path = f'work/{cid}/'
+            # H = E + PV
+            # P=0なら pv_term=0 となり、H=E となる
+            pv_term = (target_pressure_gpa * GPa) * volume
+            enthalpy_total = energy + pv_term
 
+            # 一原子あたりの値
+            final_val_per_atom = enthalpy_total / num_atoms
 
-            opt_struc_node = results_node.outputs.structure
-
-            # 1. 最適化済み構造ノードに、cryspyのIDをextraとして記録
-            opt_struc_node.base.extras.set('cryspy_id', cid)
-            # 2. そのノードをGroupに追加
-            group.add_nodes(opt_struc_node)
-            self.report(f"Added StructureData<{opt_struc_node.pk}> with cryspy_id={cid} to Group<{group.pk}>")
-
-            if rin.algo == "RS":
-                gen_ = None
-
-            elif rin.algo == "EA":
-                gen_ = self.inputs.detail_data.ea_data[0]  # EADataから世代情報を取得
+            # ログ出力（デバッグ用）
+            # P=0 のときは PV=0 と表示
+            self.report(f"ID={cid}: E={energy:.2f}, P={target_pressure_gpa}GPa, PV={pv_term:.2f} -> H_total={enthalpy_total:.2f}")
 
 
-            print(f"Current working directory opt: {os.getcwd()}") # 現在のディレクトリを確認
+            # print(f"ID: {cid}, Energy: {energy}")
 
-            #cryspyによる結果の保存
-            _, rslt_data = ctrl_job.regist_opt(
-                rin,
-                cid,
-                init_struc_data,
-                opt_struc_data,
-                rslt_data,
-                opt_struc,
-                energy,
-                magmom=None,
-                check_opt=None,
-                ef=None,
-                nat=None,
-                n_selection=None,
-                gen=gen_
-            )
+            # Groupに追加
+            structure_node.base.extras.set('cryspy_id', cid)
+            output_group.add_nodes(structure_node)
+            #self.report(f"Added StructureData<{structure_node.pk}> with cryspy_id={cid} to Group<{output_group.pk}>")
 
-        # 成功した計算が一つでもあれば、後続の処理を実行
+            gen_arg = None
+            if rin.algo == "EA":
+                gen_arg = gen
+
+            try:
+                # CrySPY登録
+                opt_struc_data, rslt_data = ctrl_job.regist_opt(
+                    rin,
+                    cid,
+                    init_struc_data,
+                    opt_struc_data,
+                    rslt_data,
+                    opt_struc,
+                    final_val_per_atom,
+                    magmom=None,
+                    check_opt=None,
+                    ef=None,
+                    nat=None,
+                    n_selection=None,
+                    gen=gen_arg
+                )
+            except Exception as e:
+                self.report(f"ERROR: Failed to register structure ID: {cid}. Skipping this structure.")
+                self.report(f"Reason: {e}")
+                continue
+
         if calcfunc_inputs:
             structure_energy_data_results = pack_results(**calcfunc_inputs)
             self.out("structure_energy_data", structure_energy_data_results)
 
-        #opt_struc_node = StructureCollectionData(structures=opt_struc_data)
-        #opt_struc_node.store()
-        #self.out('opt_struc_data', opt_struc_node)
-
         rslt_node = PandasFrameData(rslt_data)
         rslt_node.store()
         self.out('rslt_data', rslt_node)
+
+        self.report(f"Generation {gen} All structures optimization Done.")
+
+
+
+
+
