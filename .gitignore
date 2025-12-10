@@ -34,3 +34,6 @@ vasprun.xml
 # aiida_cryspy/data フォルダとその中身は無視しない
 !aiida_cryspy/data/
 !aiida_cryspy/data/**
+
+aiida_cryspy/data/**/__pycache__/
+aiida_cryspy/data/**/*.pyc
