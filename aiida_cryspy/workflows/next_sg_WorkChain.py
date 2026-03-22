@@ -42,7 +42,7 @@ class next_sg_WorkChain(WorkChain):
         self.report("Starting next structure generation...")
 
 
-        # 1. 最適化「前」の構造データを復元 (init_struc_data)
+        # 1. 最適化前の構造データを復元 (init_struc_data)
         init_group_pk = self.inputs.initial_structures_group_pk.value
         init_group = load_group(pk=init_group_pk)
 
@@ -52,7 +52,7 @@ class next_sg_WorkChain(WorkChain):
             if cid is not None:
                 init_struc_data[cid] = node.get_pymatgen()
 
-        # 2. 最適化「後」の構造データを復元 (opt_struc_data)
+        # 2. 最適化後の構造データを復元 (opt_struc_data)
         opt_group_pk = self.inputs.optimized_structures_group_pk.value
         opt_group = load_group(pk=opt_group_pk)
 
@@ -74,7 +74,7 @@ class next_sg_WorkChain(WorkChain):
         self.report(f"Generating generation {gen + 1} from {len(opt_struc_data)} parent structures.")
 
         # 2. 次世代生成ロジックの実行
-        # ctrl_job.next_gen_EA を直接呼び出します
+        # ctrl_job.next_gen_EA を直接呼び出す
         # (calcfunctionにすると戻り値の構造辞書が巨大になりDBエラーになるため)
         next_struc_dict, id_queueing, ea_data, rslt_data_new = ctrl_job.next_gen_EA(
             rin,

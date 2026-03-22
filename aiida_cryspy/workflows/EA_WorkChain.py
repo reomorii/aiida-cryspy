@@ -1,8 +1,8 @@
-from aiida.engine import WorkChain, ToContext, while_,if_
+from aiida.engine import WorkChain, ToContext, while_
 from aiida.plugins import WorkflowFactory, DataFactory
-from aiida.orm import Int, Str, Code, Dict, Group, load_group
+from aiida.orm import Int, Str, Code, Dict, load_group
 
-# 各WorkChainをFactoryからロード
+# 各WorkChainをインポート
 InitializeWorkChain = WorkflowFactory("aiida_cryspy.initial_structures")
 MultiStructureOptimizeWorkChain = WorkflowFactory("aiida_cryspy.optimize_structures")
 NextSgWorkChain = WorkflowFactory("aiida_cryspy.next_sg")
@@ -10,153 +10,124 @@ PandasFrameData = DataFactory("aiida_cryspy.dataframe")
 
 class EA_WorkChain(WorkChain):
     """
-    進化アルゴリズムの全プロセスを管理するマスターWorkChain。
+    AiiDA-CrySPYの進化的アルゴリズム(EA)全体を統括するWorkChain。
     """
     @classmethod
     def define(cls, spec):
         super().define(spec)
 
-        # --- 入力 ---
+        # --- Inputs ---
         spec.input("max_generations", valid_type=Int, default=lambda: Int(50))
         spec.input("cryspy_in_filename", valid_type=Str, default=lambda: Str("cryspy_in"))
         spec.input("code", valid_type=Code)
         spec.input("parameters", valid_type=Dict)
         spec.input("options", valid_type=Dict)
 
-        # --- 出力 ---
-        spec.output("final_structures_group", valid_type=Group, help="最終的に最適化された全構造を含むGroup")
-        spec.output("final_results", valid_type=PandasFrameData)
+        # --- Outputs ---
+        spec.output("optimized_structures_group_pk", valid_type=Int, help="全世代の最適化済み構造が蓄積されたGroupのPK")
+        spec.output("final_rslt_data", valid_type=PandasFrameData, help="最終結果データ")
 
-        # --- ワークフロー ---
+        # --- Outline ---
         spec.outline(
-            cls.initialize,
+            cls.run_initialize,         # 1. 初期化実行
+            cls.setup_initial_context,  # 2. 初期化結果をコンテキストにセット
             while_(cls.should_continue_ea)(
-                cls.run_optimization,
-                cls.run_next_generation,
+                cls.run_optimization,   # 3. 最適化実行
+                cls.update_opt_data,    # 4. 最適化結果をコンテキストに反映
+                cls.run_next_generation,# 5. 次世代生成実行
+                cls.update_next_data,   # 6. 次世代生成結果をコンテキストに反映
             ),
-            cls.run_final_optimization,
-            cls.finalize,
+            cls.run_final_optimization, # 7. 最終世代の最適化
+            cls.finalize,               # 8. 完了処理
         )
 
-    def initialize(self):
-        """
-        初期化ステップ。Groupの作成と初期構造の生成を行う。
-        """
-        # 1. この実行専用のGroupを作成し、そのpkをコンテキストに保存
-        import datetime
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        group_label = f"cryspy-ea-run/{timestamp}"
-        group = Group(label=group_label).store()
-        self.ctx.group_pk = group.pk
-        self.report(f"Created Group<{group.pk}> with label '{group.label}' for this run.")
-
-        # 2. 初期化WorkChainを呼び出す
+    def run_initialize(self):
+        """初期構造生成 WorkChainの実行"""
+        self.report("[Step 1] Running InitializeWorkChain...")
         inputs = {'cryspy_in_filename': self.inputs.cryspy_in_filename}
         running = self.submit(InitializeWorkChain, **inputs)
-        self.report(f"Launched InitializeWorkChain<{running.pk}>")
-        return ToContext(initialization=running)
+        return ToContext(init_wc=running)
+
+    def setup_initial_context(self):
+        """InitializeWorkChainが作成したGroupのPKやデータをコンテキストに保存"""
+        outputs = self.ctx.init_wc.outputs
+        
+        # 世代ごとに更新される変数
+        self.ctx.current_structures_group_pk = outputs.initial_structures_group_pk
+        self.ctx.rslt_data = outputs.rslt_data
+        self.ctx.detail_data = outputs.detail_data
+        self.ctx.id_queueing = outputs.id_queueing
+        
+        # 全世代で不変の変数（常に使い回す）
+        self.ctx.optimized_structures_group_pk = outputs.optimized_structures_group_pk
+        self.ctx.cryspy_in = outputs.cryspy_in
 
     def should_continue_ea(self):
-        """
-        EAのループを継続するかどうかを判定する。
-        """
-
-        # ループの初回は 'initialization' から世代データを取得する
-        if "next_generation" not in self.ctx:
-            current_gen = self.ctx.initialization.outputs.detail_data.ea_data[0]
-        # 2回目以降は 'next_generation' の出力から取得する
-        else:
-            current_gen = self.ctx.next_generation.outputs.detail_data.ea_data[0]
-
+        """世代数の判定"""
+        current_gen = self.ctx.detail_data.ea_data[0]
         max_gen = self.inputs.max_generations.value
-        self.report(f"Current generation: {current_gen}, Max generations: {max_gen}")
+        self.report(f"--- Generation {current_gen} / {max_gen} ---")
         return current_gen < max_gen
 
     def run_optimization(self):
-        """
-        構造最適化WorkChainを呼び出す。
-        """
-        # 前のステップの出力を取得
-        if "initialization" in self.ctx:  # 初回ループ
-            init_outputs = self.ctx.initialization.outputs
-        else:  # 2回目以降のループ
-            init_outputs = self.ctx.next_generation.outputs
-
+        """構造最適化 WorkChainの実行"""
         inputs = {
-            "initial_structures": init_outputs.initial_structures,
-            "id_queueing": init_outputs.id_queueing,
-            "rslt_data": init_outputs.rslt_data,
-            "cryspy_in": init_outputs.cryspy_in,
-            "detail_data": init_outputs.detail_data,
+            "initial_structures_group_pk": self.ctx.current_structures_group_pk,
+            "optimized_structures_group_pk": self.ctx.optimized_structures_group_pk, # 蓄積用Groupを渡す
+            "rslt_data": self.ctx.rslt_data,
+            "cryspy_in": self.ctx.cryspy_in,
+            "detail_data": self.ctx.detail_data,
+            "id_queueing": self.ctx.id_queueing,
             "code": self.inputs.code,
             "parameters": self.inputs.parameters,
             "options": self.inputs.options,
-            # ★ GroupのPKを渡す
-            "structures_group_pk": Int(self.ctx.group_pk),
         }
-
         running = self.submit(MultiStructureOptimizeWorkChain, **inputs)
-        self.report(f"Launched MultiStructureOptimizeWorkChain<{running.pk}>")
-        return ToContext(optimization=running)
+        return ToContext(opt_wc=running)
+
+    def update_opt_data(self):
+        """最適化後の結果でコンテキストの rslt_data を更新"""
+        self.ctx.rslt_data = self.ctx.opt_wc.outputs.rslt_data
 
     def run_next_generation(self):
-        """
-        次世代構造生成WorkChainを呼び出す。
-        """
-        opt_outputs = self.ctx.optimization.outputs
-
-        # 前のステップの初期構造データを取得
-        if 'initialization' in self.ctx:
-            initial_structures_node = self.ctx.initialization.outputs.initial_structures
-            detail_data_node = self.ctx.initialization.outputs.detail_data
-            cryspy_in_node = self.ctx.initialization.outputs.cryspy_in
-        else:
-            initial_structures_node = self.ctx.next_generation.outputs.next_structures
-            detail_data_node = self.ctx.next_generation.outputs.detail_data
-            cryspy_in_node = self.ctx.next_generation.outputs.cryspy_in
-
-
+        """次世代構造生成 WorkChainの実行"""
         inputs = {
-            "initial_structures": initial_structures_node,
-            "rslt_data": opt_outputs.rslt_data,
-            "detail_data": detail_data_node,
-            "cryspy_in": cryspy_in_node,
-            # ★ GroupのPKを渡す
-            "structures_group_pk": Int(self.ctx.group_pk),
+            "initial_structures_group_pk": self.ctx.current_structures_group_pk, # 親(最適化前)のGroup
+            "optimized_structures_group_pk": self.ctx.optimized_structures_group_pk, # 親(最適化後)のGroup
+            "rslt_data": self.ctx.rslt_data, # 更新された最新の結果
+            "detail_data": self.ctx.detail_data,
+            "cryspy_in": self.ctx.cryspy_in,
         }
-
         running = self.submit(NextSgWorkChain, **inputs)
-        self.report(f"Launched NextSgWorkChain<{running.pk}>")
-        return ToContext(next_generation=running)
+        return ToContext(next_wc=running)
+
+    def update_next_data(self):
+        """NextSgWorkChainが新しく作成したGroupのPKやデータでコンテキストを上書き（次のループの準備）"""
+        outputs = self.ctx.next_wc.outputs
+        self.ctx.current_structures_group_pk = outputs.next_structures_group_pk
+        self.ctx.rslt_data = outputs.rslt_data
+        self.ctx.detail_data = outputs.detail_data
+        self.ctx.id_queueing = outputs.id_queueing
 
     def run_final_optimization(self):
-        """最終世代の最適化のみを実行する。"""
-        self.report(f"Running final optimization for generation {self.inputs.max_generations.value}.")
-
-        # 最後のrun_next_generation (49世代目) の結果を使う
-        last_outputs = self.ctx.next_generation.outputs
-
+        """ループを抜けた後、最終世代の最適化のみを実行"""
+        self.report("Running final optimization...")
         inputs = {
-            'initial_structures': last_outputs.next_structures,
-            'id_queueing': last_outputs.id_queueing,
-            'rslt_data': last_outputs.rslt_data,
-            'cryspy_in': last_outputs.cryspy_in,
-            'detail_data': last_outputs.detail_data,
+            "initial_structures_group_pk": self.ctx.current_structures_group_pk,
+            "optimized_structures_group_pk": self.ctx.optimized_structures_group_pk,
+            "rslt_data": self.ctx.rslt_data,
+            "cryspy_in": self.ctx.cryspy_in,
+            "detail_data": self.ctx.detail_data,
+            "id_queueing": self.ctx.id_queueing,
             "code": self.inputs.code,
             "parameters": self.inputs.parameters,
             "options": self.inputs.options,
-            "structures_group_pk": Int(self.ctx.group_pk),
         }
         running = self.submit(MultiStructureOptimizeWorkChain, **inputs)
-        return ToContext(final_optimization=running)
+        return ToContext(final_opt_wc=running)
 
     def finalize(self):
-        """
-        最終結果をWorkChainの出力に設定する。
-        """
-        self.report("Evolutionary algorithm finished.")
-        group = load_group(pk=self.ctx.group_pk)
-        final_results = self.ctx.final_optimization.outputs.rslt_data
-
-        self.out('final_structures_group', group)
-        self.out('final_results', final_results)
+        """最終結果の出力"""
+        self.report("Evolutionary algorithm finished completely.")
+        self.out('optimized_structures_group_pk', self.ctx.optimized_structures_group_pk)
+        self.out('final_rslt_data', self.ctx.final_opt_wc.outputs.rslt_data)

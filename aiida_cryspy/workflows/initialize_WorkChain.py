@@ -41,7 +41,7 @@ class initialize_workchain(WorkChain):
         # lock_cryspyのチェックと作成 (action.initialize()の冒頭部分を再現)
         if os.path.isfile("lock_cryspy"):
             self.report("lock_cryspy file exists, aborting.")
-            return self.exit_codes.ERROR_LOCK_FILE_EXISTS  # (別途exit_codeの定義が必要)
+            return self.exit_codes.ERROR_LOCK_FILE_EXISTS
         with open("lock_cryspy", "w"):
             pass
         self.report("Created lock_cryspy file.")
@@ -49,7 +49,7 @@ class initialize_workchain(WorkChain):
         # cryspy.statのチェック
         if os.path.isfile("cryspy.stat"):
             self.report("cryspy.stat file exists. Clean files to start from the beginning.")
-            return self.exit_codes.ERROR_STAT_FILE_EXISTS  # (別途exit_codeの定義が必要)
+            return self.exit_codes.ERROR_STAT_FILE_EXISTS
 
     def run_initialize(self):
         """
