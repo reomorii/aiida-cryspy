@@ -4,13 +4,13 @@ AiiDA上でのCrySPYのワークフローを自動化・管理するためのパ
 
 
 
-## 前提条件 (Prerequisites)
+## 前提条件
 
 本パッケージを利用するには、AiiDA (aiida-core) をセットアップし、プロファイルを作成する必要があります． AiiDA自体のセットアップについては、AiiDA公式ドキュメント ( https://aiida.readthedocs.io/ ) を参照してください。
 
 
 
-## インストール方法 (Installation)
+## インストール方法
 
 リポジトリをクローンし、開発モード（または通常のpip）でインストールします。
 
@@ -39,12 +39,14 @@ verdi plugin list aiida.data
 
 
 
-## 実行方法 (Usage / Examples)
+## 実行方法
 
-example フォルダ配下にあるサンプルを実行する手順です。
+exampleフォルダ配下にあるサンプルを実行する手順です。
 
 ### 注意：作業ディレクトリについて
 実行ファイル（main.pyなど）を動かす際、カレントディレクトリが出力ファイルの参照先（作業ディレクトリ）になります。そのため、必ず実行するディレクトリでデーモン（Daemon）を起動してください。
+
+
 
 ### ステップ1: デーモンの起動
 example などの、計算を実行したいディレクトリへ移動し、デーモンを起動（または再起動）します。
@@ -54,13 +56,15 @@ cd path/to/your/example_directory
 verdi daemon start
 ```
 
+
+
 ### ステップ2: スクリプトの実行
 ```bash
 python3 main.py
 ```
 
 
-
+## プラグイン
 
 
 ### WorkChains (aiida.workflows)
