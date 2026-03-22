@@ -2,13 +2,13 @@
 
 AiiDA上でのCrySPYのワークフローを自動化・管理するためのパッケージです。
 
----
+
 
 ## 前提条件 (Prerequisites)
 
 本パッケージを利用するには、AiiDA (aiida-core) をセットアップし、プロファイルを作成する必要があります． AiiDA自体のセットアップについては、AiiDA公式ドキュメント ( https://aiida.readthedocs.io/ ) を参照してください。
 
----
+
 
 ## インストール方法 (Installation)
 
@@ -37,7 +37,7 @@ verdi plugin list aiida.workflows
 verdi plugin list aiida.data
 ```
 
----
+
 
 ## 実行方法 (Usage / Examples)
 
@@ -59,7 +59,7 @@ verdi daemon start
 python3 main.py
 ```
 
----
+
 
 
 
@@ -67,15 +67,15 @@ python3 main.py
 
 | プラグイン名 | 呼び出しパス | 概要 |
 | :--- | :--- | :--- |
-| 初期構造生成 | aiida_cryspy.initial_structures | 初期構造を作成するワークチェーン |
-| 構造最適化 | aiida_cryspy.optimize_structures | 複数の構造を最適化するワークチェーン |
-| 次世代選択(SG) | aiida_cryspy.next_sg | 次の世代の対称性を選択するワークチェーン |
-| 進化アルゴリズム | aiida_cryspy.ea | EA（進化アルゴリズム）を実行するワークチェーン |
+| 初期構造生成 | aiida_cryspy.initial_structures | 初期構造を作成 |
+| 構造最適化 | aiida_cryspy.optimize_structures | 構造を最適化 |
+| 次世代生成 | aiida_cryspy.next_sg | 次の世代の構造を生成 |
+| 進化的アルゴリズム | aiida_cryspy.ea | EA（進化的アルゴリズム）を実行 |
 
 ### Data Types (aiida.data)
 
 - aiida_cryspy.dataframe (Pandas DataFrameの保存用)
-- aiida_cryspy.ea_data
-- aiida_cryspy.rin_data
-- aiida_cryspy.structurecollection
+- aiida_cryspy.ea_data （EAについてのデータの保存用）
+- aiida_cryspy.rin_data (cryspy.inについてのデータの保存用)
+- aiida_cryspy.structurecollection (構造データの保存用)
 
