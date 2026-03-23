@@ -1,18 +1,33 @@
 [basic]
-algo = RS
+algo = EA
 calc_code = ASE
-tot_struc = 1
 nstage = 1
-njob = 1
+njob = 5
 jobcmd = zsh
 jobfile = job_cryspy
 
 [structure]
-natot = 39
+natot = 30
 atype = Ba Fe O
-nat = 8 8 23
+nat = 6 6 18
+
+[EA]
+n_pop = 100
+n_crsov = 50
+n_perm = 20
+n_strain = 20
+n_rand = 10
+n_elite = 2
+n_fittest = 50
+slct_func = TNM
+t_size = 3
+maxgen_ea = 0
 
 [ASE]
 ase_python = ase_in.py
 
 [option]
+
+
+
+

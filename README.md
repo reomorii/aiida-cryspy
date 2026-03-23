@@ -49,10 +49,10 @@ exampleフォルダ配下にあるサンプルを実行する手順です。
 
 
 ### ステップ1: デーモンの起動
-example などの、計算を実行したいディレクトリへ移動し、デーモンを起動（または再起動）します。
+計算を実行したいディレクトリへ移動し、デーモンを起動（または再起動）します。
 
 ```bash
-cd path/to/your/example_directory
+cd your_work_path/aiida-cryspy/aiida_cryspy/example/EA
 verdi daemon start
 ```
 

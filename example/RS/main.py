@@ -18,7 +18,7 @@ max_generations = 1
 cryspy_in_filename = "cryspy_in"
 
 # 使用する計算コードのラベル
-code_label = "aiida-ase@script_ssh2"
+code_label = "aiida-cryspy@ibis"
 
 # 計算オプション (Queueやリソースの設定)
 options = {

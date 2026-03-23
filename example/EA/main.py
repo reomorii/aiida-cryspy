@@ -12,13 +12,13 @@ from aiida.engine import submit
 ea_WorkChain = WorkflowFactory('aiida_cryspy.ea')
 
 # 実行したい最大世代数
-max_generations = 10
+max_generations = 5
 
 # cryspyの入力ファイル名
 cryspy_in_filename = "cryspy_in"
 
 # 使用する計算コードのラベル
-code_label = "aiida-ase@script_ssh2"
+code_label = "aiida-cryspy@ibis"
 
 # 計算オプション (Queueやリソースの設定)
 options = {
